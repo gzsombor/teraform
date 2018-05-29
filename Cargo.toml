@@ -1,0 +1,10 @@
+[package]
+name = "teraform"
+version = "0.1.0"
+authors = ["Zsombor Gegesy <gzsombor@gmail.com>"]
+description = "Templating engine for the command line"
+
+[dependencies]
+tera = "0.11"
+clap = "2.31.2"
+failure = "0.1.1"
