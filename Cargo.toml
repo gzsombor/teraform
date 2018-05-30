@@ -3,6 +3,9 @@ name = "teraform"
 version = "0.1.0"
 authors = ["Zsombor Gegesy <gzsombor@gmail.com>"]
 description = "Templating engine for the command line"
+repository = "https://github.com/gzsombor/teraform"
+keywords = ["template", "tera", "cli"]
+license = "MIT/Apache-2.0"
 
 [dependencies]
 tera = "0.11"
