@@ -53,10 +53,10 @@ fn add_parameters(ctx: &mut TeraContext, cmd_line: &ArgMatches) {
             match sep_idx {
                 Some(position) => {
                     let (key, value) = kv.split_at(position);
-                    ctx.add(key, &value[1..]);
+                    ctx.insert(key, &value[1..]);
                 }
                 None => {
-                    ctx.add(kv, &true);
+                    ctx.insert(kv, &true);
                 }
             }
         });
@@ -69,7 +69,7 @@ fn add_environment(ctx: &mut TeraContext) {
        // println!("{}: {}", key, value);
        env_variables.insert(key, value);
     }
-    ctx.add("env", &env_variables);
+    ctx.insert("env", &env_variables);
 }
 
 fn run_app() -> Result<String, Error> {
