@@ -1,49 +1,56 @@
 extern crate tera;
 #[macro_use]
 extern crate clap;
-#[macro_use] 
+#[macro_use]
 extern crate failure;
 
-use std::{process, env};
+use clap::{App, Arg, ArgMatches};
+use failure::Error;
 use std::collections::HashMap;
+use std::{env, process};
 use tera::{Context as TeraContext, Tera};
-use clap::{Arg, App, ArgMatches};
-use failure::{Error};
-
 
 fn command_line<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
         .version(crate_version!())
         .author(crate_authors!("\n"))
         .about(crate_description!())
-        .arg(Arg::with_name("template")
-            .short("t")
-            .long("template")
-            .value_name("FILE")
-            .required(true)
-            .help("Template file to use")
-            .takes_value(true))
-        .arg(Arg::with_name("param")
-            .long("param")
-            .short("p")
-            .help("Sets a parameter for the template in a key=value format")
-            .multiple(true)
-            .takes_value(true))
-        .arg(Arg::with_name("json")
-            .long("json")
-            .short("j")
-            .multiple(true)
-            .help("Loads parameters from a json file")
-            .value_name("FILE")
-            .takes_value(true))
-        .arg(Arg::with_name("yaml")
-            .long("yaml")
-            .short("y")
-            .multiple(true)
-            .help("Loads parameters from a yaml file")
-            .value_name("FILE")
-            .takes_value(true))
-    .get_matches()
+        .arg(
+            Arg::with_name("template")
+                .short("t")
+                .long("template")
+                .value_name("FILE")
+                .required(true)
+                .help("Template file to use")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("param")
+                .long("param")
+                .short("p")
+                .help("Sets a parameter for the template in a key=value format")
+                .multiple(true)
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("json")
+                .long("json")
+                .short("j")
+                .multiple(true)
+                .help("Loads parameters from a json file")
+                .value_name("FILE")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("yaml")
+                .long("yaml")
+                .short("y")
+                .multiple(true)
+                .help("Loads parameters from a yaml file")
+                .value_name("FILE")
+                .takes_value(true),
+        )
+        .get_matches()
 }
 
 fn add_parameters(ctx: &mut TeraContext, cmd_line: &ArgMatches) {
@@ -66,8 +73,8 @@ fn add_parameters(ctx: &mut TeraContext, cmd_line: &ArgMatches) {
 fn add_environment(ctx: &mut TeraContext) {
     let mut env_variables = HashMap::new();
     for (key, value) in env::vars() {
-       // println!("{}: {}", key, value);
-       env_variables.insert(key, value);
+        // println!("{}: {}", key, value);
+        env_variables.insert(key, value);
     }
     ctx.insert("env", &env_variables);
 }
@@ -77,7 +84,7 @@ fn run_app() -> Result<String, Error> {
     let template_path = matches.value_of("template").unwrap();
 
     let mut tera = Tera::default();
-    let _loading = tera.add_template_file(template_path, Some("main")).unwrap();
+    tera.add_template_file(template_path, Some("main")).unwrap();
     let mut context = TeraContext::new();
     add_environment(&mut context);
     add_parameters(&mut context, &matches);
@@ -85,12 +92,18 @@ fn run_app() -> Result<String, Error> {
     let result = tera.render("main", &context);
     match result {
         Ok(text) => Ok(text),
-        Err(template_error) => {
-            match template_error.iter().skip(1).next() {
-                Some(cause) => Err(format_err!("Rendering '{}' fails because: {}", template_path, cause)),
-                None => Err(format_err!("Rendering '{}' failure: {}", template_path, template_error))
-            }
-        }
+        Err(template_error) => match template_error.iter().nth(1) {
+            Some(cause) => Err(format_err!(
+                "Rendering '{}' fails because: {}",
+                template_path,
+                cause
+            )),
+            None => Err(format_err!(
+                "Rendering '{}' failure: {}",
+                template_path,
+                template_error
+            )),
+        },
     }
 }
 
