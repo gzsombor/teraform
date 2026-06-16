@@ -14,10 +14,10 @@ enum AppError {
 }
 
 fn command_line() -> ArgMatches {
-    Command::new("teraform")
-        .version("0.1.0")
-        .author("Zsombor Gegesy <gzsombor@gmail.com>")
-        .about("Templating engine for the command line")
+    Command::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
             Arg::new("template")
                 .short('t')
