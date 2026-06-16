@@ -1,9 +1,17 @@
 use clap::{Arg, ArgAction, ArgMatches, Command};
-use failure::{Error, format_err};
 use std::collections::HashMap;
 use std::error::Error as _;
 use std::{env, process};
 use tera::{Context as TeraContext, Tera};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+enum AppError {
+    #[error("Rendering '{0}' fails because: {1}")]
+    RenderWithCause(String, String),
+    #[error("Rendering '{0}' failure: {1}")]
+    RenderFailure(String, String),
+}
 
 fn command_line() -> ArgMatches {
     Command::new("teraform")
@@ -64,13 +72,12 @@ fn add_parameters(ctx: &mut TeraContext, cmd_line: &ArgMatches) {
 fn add_environment(ctx: &mut TeraContext) {
     let mut env_variables = HashMap::new();
     for (key, value) in env::vars() {
-        // println!("{}: {}", key, value);
         env_variables.insert(key, value);
     }
     ctx.insert("env", &env_variables);
 }
 
-fn run_app() -> Result<String, Error> {
+fn run_app() -> Result<String, AppError> {
     let matches = command_line();
     let template_path = matches.get_one::<String>("template").unwrap();
 
@@ -84,15 +91,13 @@ fn run_app() -> Result<String, Error> {
     match result {
         Ok(text) => Ok(text),
         Err(template_error) => match template_error.source() {
-            Some(cause) => Err(format_err!(
-                "Rendering '{}' fails because: {}",
-                template_path,
-                cause
+            Some(cause) => Err(AppError::RenderWithCause(
+                template_path.to_string(),
+                cause.to_string(),
             )),
-            None => Err(format_err!(
-                "Rendering '{}' failure: {}",
-                template_path,
-                template_error
+            None => Err(AppError::RenderFailure(
+                template_path.to_string(),
+                template_error.to_string(),
             )),
         },
     }
