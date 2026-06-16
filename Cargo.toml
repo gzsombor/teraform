@@ -2,12 +2,13 @@
 name = "teraform"
 version = "0.1.0"
 authors = ["Zsombor Gegesy <gzsombor@gmail.com>"]
+edition = "2024"
 description = "Templating engine for the command line"
 repository = "https://github.com/gzsombor/teraform"
 keywords = ["template", "tera", "cli"]
 license = "MIT/Apache-2.0"
 
 [dependencies]
-tera = "0.11"
-clap = "2.31.2"
-failure = "0.1.1"
+tera = "1.20"
+clap = "4.6"
+failure = "0.1.8"

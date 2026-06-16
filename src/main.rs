@@ -1,60 +1,51 @@
-extern crate tera;
-#[macro_use]
-extern crate clap;
-#[macro_use]
-extern crate failure;
-
-use clap::{App, Arg, ArgMatches};
-use failure::Error;
+use clap::{Arg, ArgAction, ArgMatches, Command};
+use failure::{Error, format_err};
 use std::collections::HashMap;
+use std::error::Error as _;
 use std::{env, process};
 use tera::{Context as TeraContext, Tera};
 
-fn command_line<'a>() -> ArgMatches<'a> {
-    App::new(crate_name!())
-        .version(crate_version!())
-        .author(crate_authors!("\n"))
-        .about(crate_description!())
+fn command_line() -> ArgMatches {
+    Command::new("teraform")
+        .version("0.1.0")
+        .author("Zsombor Gegesy <gzsombor@gmail.com>")
+        .about("Templating engine for the command line")
         .arg(
-            Arg::with_name("template")
-                .short("t")
+            Arg::new("template")
+                .short('t')
                 .long("template")
                 .value_name("FILE")
                 .required(true)
-                .help("Template file to use")
-                .takes_value(true),
+                .help("Template file to use"),
         )
         .arg(
-            Arg::with_name("param")
+            Arg::new("param")
                 .long("param")
-                .short("p")
+                .short('p')
                 .help("Sets a parameter for the template in a key=value format")
-                .multiple(true)
-                .takes_value(true),
+                .action(ArgAction::Append),
         )
         .arg(
-            Arg::with_name("json")
+            Arg::new("json")
                 .long("json")
-                .short("j")
-                .multiple(true)
+                .short('j')
                 .help("Loads parameters from a json file")
                 .value_name("FILE")
-                .takes_value(true),
+                .action(ArgAction::Append),
         )
         .arg(
-            Arg::with_name("yaml")
+            Arg::new("yaml")
                 .long("yaml")
-                .short("y")
-                .multiple(true)
+                .short('y')
                 .help("Loads parameters from a yaml file")
                 .value_name("FILE")
-                .takes_value(true),
+                .action(ArgAction::Append),
         )
         .get_matches()
 }
 
 fn add_parameters(ctx: &mut TeraContext, cmd_line: &ArgMatches) {
-    if let Some(values) = cmd_line.values_of("param") {
+    if let Some(values) = cmd_line.get_many::<String>("param") {
         values.for_each(|kv| {
             let sep_idx = kv.find('=');
             match sep_idx {
@@ -63,7 +54,7 @@ fn add_parameters(ctx: &mut TeraContext, cmd_line: &ArgMatches) {
                     ctx.insert(key, &value[1..]);
                 }
                 None => {
-                    ctx.insert(kv, &true);
+                    ctx.insert(kv.as_str(), &true);
                 }
             }
         });
@@ -81,7 +72,7 @@ fn add_environment(ctx: &mut TeraContext) {
 
 fn run_app() -> Result<String, Error> {
     let matches = command_line();
-    let template_path = matches.value_of("template").unwrap();
+    let template_path = matches.get_one::<String>("template").unwrap();
 
     let mut tera = Tera::default();
     tera.add_template_file(template_path, Some("main")).unwrap();
@@ -92,7 +83,7 @@ fn run_app() -> Result<String, Error> {
     let result = tera.render("main", &context);
     match result {
         Ok(text) => Ok(text),
-        Err(template_error) => match template_error.iter().nth(1) {
+        Err(template_error) => match template_error.source() {
             Some(cause) => Err(format_err!(
                 "Rendering '{}' fails because: {}",
                 template_path,
