@@ -9,6 +9,6 @@ keywords = ["template", "tera", "cli"]
 license = "MIT/Apache-2.0"
 
 [dependencies]
-tera = "1.20"
+tera = "2.1"
 clap = "4.6"
 thiserror = "2"
